@@ -1,41 +1,32 @@
 package io.github.HunterLiles.logic;
 
-import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.utils.Array;
 
 public class ParallaxLayer extends Actor {
-    private int scroll;
-    private Array<Texture> layers;
-    private final int LAYER_SPEED_DIFFERENCE = 2;
+    Texture texture;
+    float factor;
+    boolean wrapHorizontally, wrapVertically;
+    Camera camera;
 
-    float x, y, width, height, scaleX, scaleY;
-    int originX, originY, rotation, srcX, srcY;
-    boolean flipX, flipY;
+    public ParallaxLayer(Texture texture, float factor, boolean wrapHorizontally, boolean wrapVertically) {
+        this.texture = texture;
+        this.factor = factor;
+        this.wrapHorizontally = wrapHorizontally;
+        this.wrapVertically = wrapVertically;
+        this.texture.setWrap(wrapHorizontally ? Texture.TextureWrap.Repeat : Texture.TextureWrap.ClampToEdge, wrapVertically ? Texture.TextureWrap.Repeat : Texture.TextureWrap.ClampToEdge); }
 
-    private double speed;
+    public void setCamera(Camera camera) { this.camera = camera; }
 
-    public ParallaxLayer (Array<Texture> textures) {
-        layers = textures;
-        for (int i = 0; i < textures.size; i++){ layers.get(i).setWrap(Texture.TextureWrap.MirroredRepeat, Texture.TextureWrap.MirroredRepeat);}
-
-        scroll = 0;
-        speed = 0;
-
-        x = y = originX = originY = rotation = srcY = 0;
-        width = Gdx.graphics.getWidth();
-        height = Gdx.graphics.getHeight();
-        scaleX = scaleY = 1;
-        flipX = flipY = false; }
-
-    public void setSpeed (double newSpeed){ speed = newSpeed; }
-
-    @Override public void draw (Batch batch, float parentAlpha) {
-        batch.setColor(getColor().r, getColor().g, getColor().b, getColor().a * parentAlpha);
-
-        scroll += (int) speed;
-        for (int i = 0; i < layers.size; i++) {
-            srcX = scroll + i * this.LAYER_SPEED_DIFFERENCE * scroll;
-            batch.draw(layers.get(i), x, y, originX, originY, width, height, scaleX, scaleY, rotation, srcX, srcY, layers.get(i).getWidth(), layers.get(i).getHeight(), flipX, flipY); }}}
+    public void render(SpriteBatch batch) {
+        int xOffset = (int) (camera.position.x * factor);
+        int yOffset = (int) (camera.position.y * factor);
+        TextureRegion region = new TextureRegion(texture);
+        region.setRegionX(xOffset % texture.getWidth());
+        region.setRegionY(yOffset % texture.getHeight());
+        region.setRegionWidth(wrapHorizontally ? (int) camera.viewportWidth : texture.getWidth());
+        region.setRegionHeight(wrapVertically ? (int) camera.viewportHeight : texture.getHeight());
+        batch.draw(region, camera.position.x - camera.viewportWidth/2, camera.position.y - camera.viewportHeight/2); }}
