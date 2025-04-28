@@ -2,33 +2,30 @@ package io.github.HunterLiles.screens;
 
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.*;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.HunterLiles.Main;
 import io.github.HunterLiles.logic.ParallaxLayer;
 
 public class GameScreen extends InputAdapter implements Screen {
-    Stage stage;
-    Main game;
-    SpriteBatch batch;
-    Texture player;
-    TextureRegion[] animationFrames;
-    Animation animation;
-    float Speed = 300.0f;
-    float playerX = -100, playerY = -250;
-    ParallaxLayer[] layers;
-    Camera camera;
-    float elapsedTime;
+    private Stage stage;
+    private Main game;
+    private SpriteBatch batch;
+    private float Speed = 300.0f;
+    private float playerX = -100, playerY = -250;
+    private ParallaxLayer[] layers;
+    private ParallaxLayer[] foreground;
+    private OrthographicCamera camera;
+    private static final float FRAME_TIME = 0.07f;
+    private float elapsedTime = 0;
+    private Animation<TextureRegion> idle;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -38,24 +35,18 @@ public class GameScreen extends InputAdapter implements Screen {
         music.setLooping(true);
         music.play(); }
 
-    //With my current knowledge this is used like the create method?
+    //With my current knowledge this is used like the create method? Yes this is just like that.
     @Override public void show() {
         stage = new Stage(new ScreenViewport());
-        player = new Texture("images/Player.png");
-        TextureRegion[][] tempFrames = TextureRegion.split(player, 350, 407);
-        animationFrames = new TextureRegion[77];
-        int index = 0;
-        for (int i = 0; i < 7; i++) {
-            for (int j = 0; j < 11; j++) {
-                animationFrames[index++] = tempFrames[j][i]; }}
-        animation = new Animation(0.25f, animationFrames);
-        stage = new Stage();
         Gdx.input.setInputProcessor(stage);
+        TextureAtlas charset = new TextureAtlas(Gdx.files.internal("images/PlayerAnimation.atlas"));
+        idle = new Animation<>(FRAME_TIME, charset.findRegion("idle"));
+        idle.setFrameDuration(FRAME_TIME);
         batch = new SpriteBatch();
         camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         //Setting each parallax layer individually.
-        layers = new ParallaxLayer[12];
+        layers = new ParallaxLayer[11];
         layers [0] = new ParallaxLayer(new Texture("images/background/1.png"), 0.1f, true, false);
         layers [1] = new ParallaxLayer(new Texture("images/background/2.png"), 0.2f, true, false);
         layers [2] = new ParallaxLayer(new Texture("images/background/3.png"), 0.3f, true, false);
@@ -67,9 +58,18 @@ public class GameScreen extends InputAdapter implements Screen {
         layers [8] = new ParallaxLayer(new Texture("images/background/9.png"), 0.9f, true, false);
         layers [9] = new ParallaxLayer(new Texture("images/background/10.png"), 0.9f, true, false);
         layers [10] = new ParallaxLayer(new Texture("images/background/11.png"), 0.11f, true, false);
-        layers [11] = new ParallaxLayer(new Texture("images/background/12.png"), 0.12f, true, false);
 
+        //Makes the foreground actually in front of the character to look better.
+        foreground = new ParallaxLayer[1];
+        foreground[0] = new ParallaxLayer(new Texture(Gdx.files.internal("images/background/12.png")), 0.13f, true, false);
+
+        //Sets the parallaxing affect.
         for (ParallaxLayer layer : layers) {
+            layer.setCamera(camera);
+            layer.setPosition(0, 0);
+            layer.setSize(50, 25); }
+
+        for (ParallaxLayer layer : foreground) {
             layer.setCamera(camera);
             layer.setPosition(0, 0);
             layer.setSize(50, 25); }}
@@ -97,17 +97,21 @@ public class GameScreen extends InputAdapter implements Screen {
 
     //Don't know what I'm using this for yet.
     private void logic() {
-        elapsedTime += Gdx.graphics.getDeltaTime();
         camera.update();
         batch.setProjectionMatrix(camera.combined);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); }
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+    }
 
     //Actual drawing of things.
     private void draw() {
+        elapsedTime += Gdx.graphics.getDeltaTime();
+        TextureRegion currentFrame = idle.getKeyFrame(elapsedTime, true);
+
         //All actual renderings happen between "begin" and "end".
         batch.begin();
-            for (ParallaxLayer layer : layers) { layer.render(batch);}
-            batch.draw((Texture) animation.getKeyFrame(elapsedTime, true), playerX, playerY);
+            for (ParallaxLayer layer : layers) { layer.render(batch); }
+            batch.draw(currentFrame, playerX, playerY, currentFrame.getRegionWidth() * 2.5f, currentFrame.getRegionHeight() * 2.5f);
+            for (ParallaxLayer layer : foreground) { layer.render(batch); }
         batch.end(); }
 
     //I shouldn't need to touch any of this.
@@ -115,4 +119,4 @@ public class GameScreen extends InputAdapter implements Screen {
     @Override public void pause() { }
     @Override public void resume() { }
     @Override public void hide() { }
-    @Override public void dispose() { stage.dispose(); }}
+    @Override public void dispose() { stage.dispose(); batch.dispose(); }}
