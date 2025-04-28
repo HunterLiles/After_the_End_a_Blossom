@@ -6,11 +6,9 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
-import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TmxMapLoader;
-import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import io.github.HunterLiles.Main;
 import io.github.HunterLiles.logic.ParallaxLayer;
 
@@ -18,14 +16,18 @@ public class GameScreen extends InputAdapter implements Screen {
     private Stage stage;
     private Main game;
     private SpriteBatch batch;
-    private float Speed = 300.0f;
     private float playerX = -100, playerY = -250;
     private ParallaxLayer[] layers;
     private ParallaxLayer[] foreground;
     private OrthographicCamera camera;
     private static final float FRAME_TIME = 0.07f;
     private float elapsedTime = 0;
-    private Animation<TextureRegion> idle;
+    private Sprite currentAnimation;
+    private TextureAtlas atlas;
+    private Sprite idle, run, jump;
+    //World world = new World(new Vector2(0, -10), true);
+    //Box2DDebugRenderer debugRenderer = new Box2DDebugRenderer();
+
 
     public GameScreen(Main game) {
         this.game = game;
@@ -35,85 +37,154 @@ public class GameScreen extends InputAdapter implements Screen {
         music.setLooping(true);
         music.play(); }
 
-    //With my current knowledge this is used like the create method? Yes this is just like that.
+    //This is pretty much the same as the create method.
     @Override public void show() {
-        stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
-        TextureAtlas charset = new TextureAtlas(Gdx.files.internal("images/PlayerAnimation.atlas"));
-        idle = new Animation<>(FRAME_TIME, charset.findRegion("idle"));
-        idle.setFrameDuration(FRAME_TIME);
         batch = new SpriteBatch();
         camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
+        //ParallaxLayer loader.
+        parallaxLayer();
+
+        //Animation loader and changer.
+        animationLoader();
+        animationHandler(idle, run, jump); }
+
+    private void animationLoader(){
+        //This is where the animation file is being loaded and split into its different animation states.
+        atlas = new TextureAtlas(Gdx.files.internal("images/PlayerAnimation.atlas"));
+        Animation<TextureRegion> idleAnimation = new Animation<>(0.1f, atlas.findRegions("idle"));
+        Animation<TextureRegion> runAnimation = new Animation<>(0.1f, atlas.findRegions("run"));
+        Animation<TextureRegion> jumpAnimation = new Animation<>(0.1f, atlas.findRegions("jump"));
+        TextureRegion idleFrame = idleAnimation.getKeyFrame(elapsedTime, true);
+        TextureRegion runFrame = runAnimation.getKeyFrame(elapsedTime, true);
+        TextureRegion jumpFrame = jumpAnimation.getKeyFrame(elapsedTime, true);
+        idle = new Sprite(idleFrame);
+        run = new Sprite(runFrame);
+        jump = new Sprite(jumpFrame);
+        currentAnimation = idle; }
+
+    private void animationHandler(Sprite idle, Sprite run, Sprite jump) {
+        //This changes the animation of the character based on input. Flips it if it is going the opposite direction.
+        Gdx.input.setInputProcessor(new InputAdapter() {
+            @Override public boolean keyDown(int keyCode) {
+                if (keyCode == Input.Keys.A) {
+                    currentAnimation = run;
+                    if (!run.isFlipX()) { run.flip(true, false); }
+                    return true; }
+                if (keyCode == Input.Keys.D) {
+                    currentAnimation = run;
+                    if (run.isFlipX()) { run.flip(true, false); }
+                    return true; }
+                if (keyCode == Input.Keys.LEFT) {
+                    currentAnimation = run;
+                    if (!run.isFlipX()) { run.flip(true, false); }
+                    return true; }
+                if (keyCode == Input.Keys.RIGHT) {
+                    currentAnimation = run;
+                    if (run.isFlipX()) { run.flip(true, false); }
+                    return true; }
+                return false; }
+
+            @Override public boolean keyUp(int keyCode) {
+                if (keyCode == Input.Keys.A) {
+                    currentAnimation = idle;
+                    if (!idle.isFlipX()) { idle.flip(true, false); }
+                    return true; }
+                if (keyCode == Input.Keys.D) {
+                    currentAnimation = idle;
+                    if (idle.isFlipX()) { idle.flip(true, false); }
+                    return true; }
+                if (keyCode == Input.Keys.LEFT) {
+                    currentAnimation = idle;
+                    if (!idle.isFlipX()) { idle.flip(true, false); }
+                    return true; }
+                if (keyCode == Input.Keys.RIGHT) {
+                    currentAnimation = idle;
+                    if (idle.isFlipX()) { idle.flip(true, false); }
+                    return true; }
+                return false; }});}
+
+    private void parallaxLayer() {
         //Setting each parallax layer individually.
         layers = new ParallaxLayer[11];
-        layers [0] = new ParallaxLayer(new Texture("images/background/1.png"), 0.1f, true, false);
-        layers [1] = new ParallaxLayer(new Texture("images/background/2.png"), 0.2f, true, false);
-        layers [2] = new ParallaxLayer(new Texture("images/background/3.png"), 0.3f, true, false);
-        layers [3] = new ParallaxLayer(new Texture("images/background/4.png"), 0.4f, true, false);
-        layers [4] = new ParallaxLayer(new Texture("images/background/5.png"), 0.5f, true, false);
-        layers [5] = new ParallaxLayer(new Texture("images/background/6.png"), 0.6f, true, false);
-        layers [6] = new ParallaxLayer(new Texture("images/background/7.png"), 0.7f, true, false);
-        layers [7] = new ParallaxLayer(new Texture("images/background/8.png"), 0.8f, true, false);
-        layers [8] = new ParallaxLayer(new Texture("images/background/9.png"), 0.9f, true, false);
-        layers [9] = new ParallaxLayer(new Texture("images/background/10.png"), 0.9f, true, false);
-        layers [10] = new ParallaxLayer(new Texture("images/background/11.png"), 0.11f, true, false);
+        for (int i = 1; i <= 11; i++) {
+            layers[i-1] = new ParallaxLayer(new Texture("images/background/" + i + ".png"), i / 12f, true, false); }
 
         //Makes the foreground actually in front of the character to look better.
         foreground = new ParallaxLayer[1];
-        foreground[0] = new ParallaxLayer(new Texture(Gdx.files.internal("images/background/12.png")), 0.13f, true, false);
+        foreground[0] = new ParallaxLayer(new Texture(Gdx.files.internal("images/background/12.png")), 0.14f, true, false);
 
-        //Sets the parallaxing affect.
+        //Sets the parallax affect.
         for (ParallaxLayer layer : layers) {
             layer.setCamera(camera);
             layer.setPosition(0, 0);
-            layer.setSize(50, 25); }
+            layer.setSize(6.25f, 3.125f); }
 
         for (ParallaxLayer layer : foreground) {
             layer.setCamera(camera);
             layer.setPosition(0, 0);
-            layer.setSize(50, 25); }}
+            layer.setSize(6.25f, 3.125f); }}
 
     @Override public void render(float delta) {
         input();
         logic();
-        draw(); }
+        draw();}
 
     //Neat little methods to keep things organized in render.
     //Movement, I still need to add jumping/physics.
     private void input() {
+        float speed = 300.0f;
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-            playerX -= Gdx.graphics.getDeltaTime() * Speed;
-            camera.position.x -= Gdx.graphics.getDeltaTime() * Speed;}
+            playerX -= Gdx.graphics.getDeltaTime() * speed;
+            camera.position.x -= Gdx.graphics.getDeltaTime() * speed;}
         if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            playerX += Gdx.graphics.getDeltaTime() * Speed;
-            camera.position.x += Gdx.graphics.getDeltaTime() * Speed;}
+            playerX += Gdx.graphics.getDeltaTime() * speed;
+            camera.position.x += Gdx.graphics.getDeltaTime() * speed;}
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            playerX -= Gdx.graphics.getDeltaTime() * Speed;
-            camera.position.x -= Gdx.graphics.getDeltaTime() * Speed;}
+            playerX -= Gdx.graphics.getDeltaTime() * speed;
+            camera.position.x -= Gdx.graphics.getDeltaTime() * speed;}
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            playerX += Gdx.graphics.getDeltaTime() * Speed;
-            camera.position.x += Gdx.graphics.getDeltaTime() * Speed;}}
+            playerX += Gdx.graphics.getDeltaTime() * speed;
+            camera.position.x += Gdx.graphics.getDeltaTime() * speed;}}
 
     //Don't know what I'm using this for yet.
     private void logic() {
+        elapsedTime += Gdx.graphics.getDeltaTime();
         camera.update();
         batch.setProjectionMatrix(camera.combined);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-    }
+        //debugRenderer.render(world, camera.combined);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); }
 
     //Actual drawing of things.
     private void draw() {
-        elapsedTime += Gdx.graphics.getDeltaTime();
-        TextureRegion currentFrame = idle.getKeyFrame(elapsedTime, true);
-
         //All actual renderings happen between "begin" and "end".
         batch.begin();
             for (ParallaxLayer layer : layers) { layer.render(batch); }
-            batch.draw(currentFrame, playerX, playerY, currentFrame.getRegionWidth() * 2.5f, currentFrame.getRegionHeight() * 2.5f);
+            batch.draw(currentAnimation, playerX, playerY, 120, 100);
             for (ParallaxLayer layer : foreground) { layer.render(batch); }
         batch.end(); }
+/*
+    private void playerPhysics() {
+        BodyDef bodyDef = new BodyDef();
+        bodyDef.type = BodyDef.BodyType.DynamicBody;
+        bodyDef.position.set(playerX, playerY);
 
+        Body body = world.createBody(bodyDef);
+    }
+
+    private void groundPhysics() {
+        BodyDef groundBodyDef = new BodyDef();
+        groundBodyDef.type = BodyDef.BodyType.StaticBody;
+        groundBodyDef.position.set(new Vector2(0, 10));
+
+        Body groundBody = world.createBody(groundBodyDef);
+
+        PolygonShape groundShape = new PolygonShape();
+        groundShape.setAsBox(camera.viewportWidth, 0);
+        groundBody.createFixture(groundShape, 1f);
+        groundShape.dispose(); }
+ */
     //I shouldn't need to touch any of this.
     @Override public void resize(int width, int height) { }
     @Override public void pause() { }

@@ -7,10 +7,10 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 
 public class ParallaxLayer extends Actor {
-    Texture texture;
-    float factor;
-    boolean wrapHorizontally, wrapVertically;
-    Camera camera;
+    private Texture texture;
+    private float factor;
+    private boolean wrapHorizontally, wrapVertically;
+    private Camera camera;
 
     public ParallaxLayer(Texture texture, float factor, boolean wrapHorizontally, boolean wrapVertically) {
         this.texture = texture;

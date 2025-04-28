@@ -10,8 +10,10 @@ dependencies {
   api "io.github.libktx:ktx-scene2d:$ktxVersion"
   api "io.github.libktx:ktx-style:$ktxVersion"
   api "io.github.libktx:ktx-vis-style:$ktxVersion"
+  api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
 
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
+    implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
   }
 }
