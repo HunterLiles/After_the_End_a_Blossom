@@ -6,10 +6,9 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import io.github.HunterLiles.Main;
+import io.github.HunterLiles.logic.AnimationHandler;
 import io.github.HunterLiles.logic.ParallaxLayer;
 
 public class GameScreen extends InputAdapter implements Screen {
@@ -20,14 +19,7 @@ public class GameScreen extends InputAdapter implements Screen {
     private ParallaxLayer[] layers;
     private ParallaxLayer[] foreground;
     private OrthographicCamera camera;
-    private static final float FRAME_TIME = 0.07f;
-    private float elapsedTime = 0;
-    private Sprite currentAnimation;
-    private TextureAtlas atlas;
-    private Sprite idle, run, jump;
-    //World world = new World(new Vector2(0, -10), true);
-    //Box2DDebugRenderer debugRenderer = new Box2DDebugRenderer();
-
+    private AnimationHandler animationHandler;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -35,6 +27,7 @@ public class GameScreen extends InputAdapter implements Screen {
         //Music
         Music music = Gdx.audio.newMusic(Gdx.files.internal("audio/Movie_Theme.mp3"));
         music.setLooping(true);
+        music.setVolume(0.5f);
         music.play(); }
 
     //This is pretty much the same as the create method.
@@ -46,64 +39,9 @@ public class GameScreen extends InputAdapter implements Screen {
         //ParallaxLayer loader.
         parallaxLayer();
 
-        //Animation loader and changer.
-        animationLoader();
-        animationHandler(idle, run, jump); }
-
-    private void animationLoader(){
-        //This is where the animation file is being loaded and split into its different animation states.
-        atlas = new TextureAtlas(Gdx.files.internal("images/PlayerAnimation.atlas"));
-        Animation<TextureRegion> idleAnimation = new Animation<>(0.1f, atlas.findRegions("idle"));
-        Animation<TextureRegion> runAnimation = new Animation<>(0.1f, atlas.findRegions("run"));
-        Animation<TextureRegion> jumpAnimation = new Animation<>(0.1f, atlas.findRegions("jump"));
-        TextureRegion idleFrame = idleAnimation.getKeyFrame(elapsedTime, true);
-        TextureRegion runFrame = runAnimation.getKeyFrame(elapsedTime, true);
-        TextureRegion jumpFrame = jumpAnimation.getKeyFrame(elapsedTime, true);
-        idle = new Sprite(idleFrame);
-        run = new Sprite(runFrame);
-        jump = new Sprite(jumpFrame);
-        currentAnimation = idle; }
-
-    private void animationHandler(Sprite idle, Sprite run, Sprite jump) {
-        //This changes the animation of the character based on input. Flips it if it is going the opposite direction.
-        Gdx.input.setInputProcessor(new InputAdapter() {
-            @Override public boolean keyDown(int keyCode) {
-                if (keyCode == Input.Keys.A) {
-                    currentAnimation = run;
-                    if (!run.isFlipX()) { run.flip(true, false); }
-                    return true; }
-                if (keyCode == Input.Keys.D) {
-                    currentAnimation = run;
-                    if (run.isFlipX()) { run.flip(true, false); }
-                    return true; }
-                if (keyCode == Input.Keys.LEFT) {
-                    currentAnimation = run;
-                    if (!run.isFlipX()) { run.flip(true, false); }
-                    return true; }
-                if (keyCode == Input.Keys.RIGHT) {
-                    currentAnimation = run;
-                    if (run.isFlipX()) { run.flip(true, false); }
-                    return true; }
-                return false; }
-
-            @Override public boolean keyUp(int keyCode) {
-                if (keyCode == Input.Keys.A) {
-                    currentAnimation = idle;
-                    if (!idle.isFlipX()) { idle.flip(true, false); }
-                    return true; }
-                if (keyCode == Input.Keys.D) {
-                    currentAnimation = idle;
-                    if (idle.isFlipX()) { idle.flip(true, false); }
-                    return true; }
-                if (keyCode == Input.Keys.LEFT) {
-                    currentAnimation = idle;
-                    if (!idle.isFlipX()) { idle.flip(true, false); }
-                    return true; }
-                if (keyCode == Input.Keys.RIGHT) {
-                    currentAnimation = idle;
-                    if (idle.isFlipX()) { idle.flip(true, false); }
-                    return true; }
-                return false; }});}
+        //Animation handler.
+        animationHandler = new AnimationHandler();
+        }
 
     private void parallaxLayer() {
         //Setting each parallax layer individually.
@@ -150,7 +88,6 @@ public class GameScreen extends InputAdapter implements Screen {
 
     //Don't know what I'm using this for yet.
     private void logic() {
-        elapsedTime += Gdx.graphics.getDeltaTime();
         camera.update();
         batch.setProjectionMatrix(camera.combined);
         //debugRenderer.render(world, camera.combined);
@@ -160,11 +97,16 @@ public class GameScreen extends InputAdapter implements Screen {
     private void draw() {
         //All actual renderings happen between "begin" and "end".
         batch.begin();
+            //Background.
             for (ParallaxLayer layer : layers) { layer.render(batch); }
-            batch.draw(currentAnimation, playerX, playerY, 120, 100);
+
+            //Animation loader and changer.
+
+            //Foreground.
             for (ParallaxLayer layer : foreground) { layer.render(batch); }
         batch.end(); }
-/*
+
+    /*
     private void playerPhysics() {
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyDef.BodyType.DynamicBody;
@@ -184,10 +126,12 @@ public class GameScreen extends InputAdapter implements Screen {
         groundShape.setAsBox(camera.viewportWidth, 0);
         groundBody.createFixture(groundShape, 1f);
         groundShape.dispose(); }
- */
+     */
+
     //I shouldn't need to touch any of this.
     @Override public void resize(int width, int height) { }
     @Override public void pause() { }
     @Override public void resume() { }
     @Override public void hide() { }
-    @Override public void dispose() { stage.dispose(); batch.dispose(); }}
+    @Override public void dispose() { stage.dispose(); batch.dispose(); }
+}
