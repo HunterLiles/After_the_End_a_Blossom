@@ -8,8 +8,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 public class ParallaxLayer {
     Texture texture;
     float factor;
-    boolean wrapHorizontally;
-    boolean wrapVertically;
+    boolean wrapHorizontally, wrapVertically;
     Camera camera;
 
     public ParallaxLayer(Texture texture, float factor, boolean wrapHorizontally, boolean wrapVertically) {
@@ -17,15 +16,10 @@ public class ParallaxLayer {
         this.factor = factor;
         this.wrapHorizontally = wrapHorizontally;
         this.wrapVertically = wrapVertically;
-        this.texture.setWrap(
-            this.wrapHorizontally ? Texture.TextureWrap.Repeat : Texture.TextureWrap.ClampToEdge,
-            this.wrapVertically ? Texture.TextureWrap.Repeat : Texture.TextureWrap.ClampToEdge
-        );
+        this.texture.setWrap(wrapHorizontally ? Texture.TextureWrap.Repeat : Texture.TextureWrap.MirroredRepeat, wrapVertically ? Texture.TextureWrap.Repeat : Texture.TextureWrap.MirroredRepeat);
     }
 
-    public void setCamera(Camera camera) {
-        this.camera = camera;
-    }
+    public void setCamera(Camera camera) { this.camera = camera; }
 
     public void render(SpriteBatch batch) {
         int xOffset = (int) (camera.position.x * factor);
@@ -35,6 +29,6 @@ public class ParallaxLayer {
         region.setRegionY(yOffset % texture.getHeight());
         region.setRegionWidth(wrapHorizontally ? (int) camera.viewportWidth : texture.getWidth());
         region.setRegionHeight(wrapVertically ? (int) camera.viewportHeight : texture.getHeight());
-        batch.draw(region, camera.position.x - camera.viewportWidth/2, camera.position.y - camera.viewportHeight/2);
+        batch.draw(region, camera.position.x - camera.viewportWidth / 2, camera.position.y - camera.viewportHeight / 2);
     }
 }
