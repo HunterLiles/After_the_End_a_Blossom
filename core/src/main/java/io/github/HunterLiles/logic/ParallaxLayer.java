@@ -16,7 +16,9 @@ public class ParallaxLayer {
         this.factor = factor;
         this.wrapHorizontally = wrapHorizontally;
         this.wrapVertically = wrapVertically;
-        this.texture.setWrap(wrapHorizontally ? Texture.TextureWrap.Repeat : Texture.TextureWrap.MirroredRepeat, wrapVertically ? Texture.TextureWrap.Repeat : Texture.TextureWrap.MirroredRepeat);
+        this.texture.setWrap(
+            this.wrapHorizontally ? Texture.TextureWrap.Repeat : Texture.TextureWrap.ClampToEdge,
+            this.wrapVertically ? Texture.TextureWrap.Repeat : Texture.TextureWrap.ClampToEdge);
     }
 
     public void setCamera(Camera camera) { this.camera = camera; }

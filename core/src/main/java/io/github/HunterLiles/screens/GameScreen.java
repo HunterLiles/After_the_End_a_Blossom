@@ -18,19 +18,19 @@ public class GameScreen extends InputAdapter implements Screen {
         batch = new SpriteBatch();
 
         gameCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        gameCamera.position.set(gameCamera.viewportWidth / 2.0f, gameCamera.viewportHeight / 2.0f, 0.0f);
+        gameCamera.position.set(gameCamera.viewportWidth / 2.0f, gameCamera.viewportHeight / 400.0f, 0.0f);
         hudCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         hudCamera.position.set(hudCamera.viewportWidth / 2.0f, hudCamera.viewportHeight / 2.0f, 1.0f);
 
         Music music = Gdx.audio.newMusic(Gdx.files.internal("audio/Movie_Theme.mp3"));
         music.setLooping(true);
-        music.play();
+        //music.play();
 
         font = new BitmapFont(Gdx.files.internal("default.fnt"));
 
         layers = new ParallaxLayer[12];
         for (int i = 1; i <= layers.length; i++) {
-            layers[i - 1] = new ParallaxLayer(new Texture("images/background/" + i + ".png"), i/32f, true, true); }
+            layers[i - 1] = new ParallaxLayer(new Texture("images/background/" + i + ".png"), i/20f, true, false); }
 
         for (ParallaxLayer layer : layers) { layer.setCamera(gameCamera); }
     }
@@ -39,7 +39,6 @@ public class GameScreen extends InputAdapter implements Screen {
         gameCamera.update();
         batch.setProjectionMatrix(gameCamera.combined);
         batch.begin();
-        font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 0, hudCamera.viewportHeight);
         for (ParallaxLayer layer : layers) { layer.render(batch); }
         input();
         batch.end();
@@ -61,10 +60,10 @@ public class GameScreen extends InputAdapter implements Screen {
             gameCamera.position.x += speed * Gdx.graphics.getDeltaTime();
         }
         if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            gameCamera.position.y -= speed * Gdx.graphics.getDeltaTime();
+            //gameCamera.position.y -= speed * Gdx.graphics.getDeltaTime();
         }
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            gameCamera.position.y += speed * Gdx.graphics.getDeltaTime();
+            //gameCamera.position.y += speed * Gdx.graphics.getDeltaTime();
         }
     }
 
